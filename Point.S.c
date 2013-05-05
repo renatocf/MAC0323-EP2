@@ -20,7 +20,7 @@ point randPoint()
     int D = get_dimension();
     int i, generated = 0;
     point new = malloc(D * sizeof(float));
-    float sig, R2 = 0; 
+    float sig, R2 = 0, Rad2 = sqrt(2), K; 
     
     while(!generated) 
     {
@@ -31,11 +31,12 @@ point randPoint()
             (sig > 0.5) ? (sig = 1.0) : (sig = -1.0);
             
             new[i] = sig * rand()/RAND_MAX;
-            R2 += (new[i] *= new[i]);
+            R2 += (new[i] * new[i]);
         }
-        (R2 >= 1) ? (continue) : (generated = 1);
+        if(R2 >= 1) continue; else generated = 1;
         
-        
+        K = sqrt(-2*log(R2)/R2); Rad2 = sqrt(2);
+        for(i = 0; i < D; i++) new[i] = (new[i]*K)/Rad2;
     }
     
     return new;
