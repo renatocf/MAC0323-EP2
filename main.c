@@ -188,7 +188,7 @@ point *random_points (int N, int D, int vmode)
     for(i = 0; i < N; i++) 
     {
         Points[i] = randPoint();
-        if(vmode) { printf("%d: ", i); print_point(Points[i]); }
+        if(vmode) { /* printf("%d: ", i); */ print_point(Points[i]); }
     }
     return Points;
 }
