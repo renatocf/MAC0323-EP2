@@ -24,11 +24,8 @@
 #include "getopt.h"
 
 /* Módulos do cubo/esfera */
-#ifdef H_SPHERE_INCLUDED
-#include "Point.S.h"
-#elif  H_CUBE_INCLUDED
-#include "Point.C.h"
-#endif
+#include "Point.h"
+#include "Dimension.h"
 
 /*
 ////////////////////////////////////////////////////////////////////////
@@ -65,10 +62,8 @@ char help[]  = "LIMIAR DE CONEXIDADE PARA CERTOS GRAFOS GEOMÉTRICOS\n"
                "* -M: número de rodadas para cálculo da 'densidade\n"
                "      normalizada crítica para conexidade' (modo 2);\n"
                "* -s: semente de números aleatórios;\n"
-               "* -v: verbosidade 1 - imprime números gerados (modo\n"
-               "      1) ou densidade normalizada crítica (modo 2);\n"
-               "* -V: verbosidade 2 - imprime números gerados e a\n"
-               "      densidade normalizada crítica (modo 2);\n";
+               "* -v: verbosidade 1;\n"
+               "* -V: verbosidade 2;\n";
 
 /*
 ////////////////////////////////////////////////////////////////////////
@@ -105,7 +100,7 @@ int main(int argc, char **argv)
         point *Points; /* Vetor de pontos D-dimensionais             */
         
         /* Struct com argumentos da linha de comando */
-        Options args = { 0, 1, 0, 0, 0, 0, 314159265, 0, 0 }; 
+        Options args = { 0, 0, 1, 0, 0, 0, 314159265, 0, 0 }; 
 
     /** ARGUMENTOS ****************************************************/
         func_err = receive_arguments(argc, argv, &args);
@@ -130,7 +125,7 @@ int main(int argc, char **argv)
         if(args.C || args.L)
         {
             /* Points = get_points(vmode); */
-            if(Points == NULL) return EXIT_FAILURE;
+            /* if(Points == NULL) return EXIT_FAILURE; */
         }
         
     /** MODO 1: CONEXIDADE ********************************************/
@@ -156,7 +151,7 @@ int main(int argc, char **argv)
             for(i = 0; i < args.M; i++) 
             {
                 /* Gera pontos aleatóriamente */
-                if(!args.L) Points = random_points(args.N, vmode);
+                if(!args.L) Points = random_points(args.N, args.D, vmode);
                 
                 /* Calcula a árvore de custo mínimo */
                 d = euclidean_minimum_spanning_tree
@@ -182,6 +177,21 @@ int main(int argc, char **argv)
 -----------------------------------------------------------------------
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 */
+
+point *random_points (int N, int D, int vmode)
+{
+    int i = 0;
+    /* Gera vetor com pontos aleatórios */
+    point *Points = (point *) malloc(N * sizeof(*Points));
+    
+    set_dimension(D);
+    for(i = 0; i < N; i++) 
+    {
+        Points[i] = randPoint();
+        if(vmode) { printf("%d: ", i); print_point(Points[i]); }
+    }
+    return Points;
+}
 
 float euclidean_minimum_spanning_tree(point *p, int N, int D, int vmode)
 {

@@ -1,26 +1,55 @@
+#***********************************************#
+#**  MAC 0323  -  Estrutura de Dados          **#
+#**  IME-USP   -  Primeiro  Semestre de 2013  **#
+#**  Turma 45  -  Yoshiharu Kohayakawa        **#
+#**                                           **#
+#**  Segundo   Exercício-Programa             **#
+#**  Arquivo:  makefile                       **#
+#**                                           **#
+#**  Renato Cordeiro Ferreira        7990933  **#
+#***********************************************# 
+
 # SOURCE ###############################################################
-SRC := main.c getopt.c
-OBJ = $(patsubst %.c,%.o,$(SRC))
+SRC := main.c getopt.c Dimension.c
+OBJ := $(patsubst %.c,%.o,$(SRC))
+DEP := dependencies.mk
+
+BIN    := connectivity
+CUBE   := Point.C.o
+SPHERE := Point.S.o
 
 # PROGRAMS #############################################################
-CC := gcc
-RM := rm -f
+CC  := gcc
+RM  := rm -f
+SED := sed
+CAT := cat
+
+CFLAGS := -ansi -pedantic -Wall -g -I.
 
 # LINKER ###############################################################
-LDLIBS := -L. 
+LDLIBS  := -L. 
 LDFLAGS := -lm
 
 # BUILD ################################################################
-conectivity: $(OBJ)
-	$(CC) $^ -o $@ $(LDLIBS) $(LDFLAGS)
+cube: $(OBJ) $(CUBE) | $(DEP)
+	$(CC) $^ -o $(BIN) $(LDLIBS) $(LDFLAGS)
+	@-$(RM) $(DEP)
 
-%.o: %.c
-	$(CC) $< -o $@
+sphere: $(OBJ) $(SPHERE) | $(DEP)
+	$(CC) $^ -o $(BIN) $(LDLIBS) $(LDFLAGS)
+	@-$(RM) $(DEP)
 
 # DEPENDENCIES #########################################################
-getopt.c: getopt.h
+$(DEP):
+	@$(CC) $(SRC) -MM > $@
+	@$(SED) -e 's/\.o/\.c/' -e 's/: .*c /: /' $@ | $(CAT) > $@
+-include dependencies.mk
+
+# RULES ################################################################
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
 
 # OTHER OPTIONS ########################################################
 .PHONY: clean
 clean:
-	$(RM) *.o *~
+	$(RM) *.o *~ $(DEP) 
