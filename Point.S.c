@@ -4,47 +4,73 @@
 #include "Point.h"
 #include "Dimension.h"
 
+static float generate_gaussian();
+static float spare;
+static int spareUsed = 1;
+
 float distance(point a, point b)
 {
     int i; float si = 0;
     int D = get_dimension();
     
     for(i = 0; i < D; i++)
-        si += a[i] - b[i];
+        si += (a[i]-b[i])*(a[i]-b[i]);
 
     return sqrt(si);
 }
 
 point randPoint()
 {
-    int D = get_dimension();
-    int i, generated = 0;
-    point new = malloc(D * sizeof(float));
-    float sig, R2 = 0, R, K, Rad2 = sqrt(2); 
+    point new, origin;
+    int i, D = get_dimension(); float N;
     
-    while(!generated) 
-    {
-        R2 = 0;
-        for(i = 0; i < D; i++)
-        {
-            sig = 1.0 * rand()/RAND_MAX;
-            (sig > 0.5) ? (sig = 1.0) : (sig = -1.0);
-            
-            new[i] = 2*(1.0*rand()/RAND_MAX) - 1;
-            R2 += (new[i] * new[i]);
-        }
-        if(R2 >= 1) continue; else generated = 1;
-        
-        K = sqrt(-2*log(R2)/R2); R = sqrt(R2);
-        for(i = 0; i < D; i++) new[i] = (new[i]*K)/(Rad2*R);
-    }
+    new    = malloc(D * sizeof(*new));
+    origin = malloc(D * sizeof(*origin));
+    
+    for(i = 0; i < D; i++)
+        { new[i] = generate_gaussian(); origin[i] = 0; }
+    /* printf("Point: "); print_point(new); */
+    
+    N = distance(new, origin);
+    /* printf("N: %g\n", N); */
+    for(i = 0; i < D; i++)
+        { new[i] = new[i]/N * upper_limit(); }
     
     return new;
 }
 
-void set_seed(int seed)
+static float generate_gaussian()
 {
-    srand(seed);
+    float u, v, np, S; float K;
+    
+    if(!spareUsed)
+        { spareUsed = 1; return spare; }
+    
+    do {
+        u = (1.0 * rand()/RAND_MAX); u = u*2-1;
+        v = (1.0 * rand()/RAND_MAX); v = v*2-1;
+        S = u*u + v*v;
+        /* printf("S: %g, u: %g, v: %g\n", S, u, v); */
+        
+    } while(S >= 1 || S == 0);
+    
+    K = sqrt(-2 * log(S)/S);
+    np = u*K; spare = v*K;
+    /* printf("np: %g, spare: %g\n", np, spare); */
+    
+    spareUsed = 0; return np;
+}
+
+void set_seed(int seed) { srand(seed); }
+float lower_limit()     { return -0.5; }
+float upper_limit()     { return 0.5;  }
+
+int eq(point p1, point p2)
+{
+    int i, D = get_dimension();
+    for(i = 0; i < D; i++)
+        if(p1[i] != p2[i]) return 0;
+    return 1;
 }
 
 void print_point(point p)

@@ -2,10 +2,15 @@
 #define H_POINT_DEFINED
 
 typedef float *point;
-point randPoint();
-float distance(point, point);
 
-void set_seed(int);
-void print_point(point);
+point randPoint   (void);
+float distance    (point, point);
+                  
+void  set_seed    (int);
+float lower_limit (void);
+float upper_limit (void);
+
+int   eq          (point, point);
+void  print_point (point);
 
 #endif

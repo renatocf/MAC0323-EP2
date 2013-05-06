@@ -16,6 +16,8 @@
 -----------------------------------------------------------------------
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 */
+#include<stdarg.h>
+#include<string.h>
 #include<stdlib.h>
 #include<stdio.h>
 #include<math.h>
@@ -26,6 +28,9 @@
 /* Módulos do cubo/esfera */
 #include "Point.h"
 #include "Dimension.h"
+
+#include "queue.h"
+#include "list.h"
 
 /*
 ////////////////////////////////////////////////////////////////////////
@@ -76,10 +81,12 @@ char help[]  = "LIMIAR DE CONEXIDADE PARA CERTOS GRAFOS GEOMÉTRICOS\n"
 /* Funções auxiliares */
 int   receive_arguments (int argc, char **argv, Options *args);
 point *random_points    (int N, int D, int vmode);
+static int compare_distances(const void *p1, const void *p2);
+point *get_points(int N, int verb_mode);
 
 /* Funções para os modos de funcionamento 1 e 2 */
-float euclidean_minimum_spanning_tree(point *p, int N, int D, int vmode);
-int check_connectivity(point *p, int N, int D, float d, int vmode);
+float euclidean_minimum_spanning_tree(point *p, int N, int vmode);
+int check_connectivity(point *p, int N, float d, int vmode);
 
 /*
 ////////////////////////////////////////////////////////////////////////
@@ -124,8 +131,8 @@ int main(int argc, char **argv)
         set_seed(args.s); /* Semente de números aleatórios */
         if(args.C || args.L)
         {
-            /* Points = get_points(vmode); */
-            /* if(Points == NULL) return EXIT_FAILURE; */
+            Points = get_points(args.N, vmode);
+            if(Points == NULL) return EXIT_FAILURE;
         }
         
     /** MODO 1: CONEXIDADE ********************************************/
@@ -135,7 +142,7 @@ int main(int argc, char **argv)
             if(!args.C) Points = random_points(args.N, args.D, vmode);
             
             func_err = check_connectivity
-                (Points, args.N, args.D, args.d, vmode);
+                (Points, args.N, args.d, vmode);
             if(func_err) 
                 printf("Grafo não é conexo para d = %g\n", args.d);
             else 
@@ -154,8 +161,7 @@ int main(int argc, char **argv)
                 if(!args.L) Points = random_points(args.N, args.D, vmode);
                 
                 /* Calcula a árvore de custo mínimo */
-                d = euclidean_minimum_spanning_tree
-                    (Points, args.N, args.D, vmode);
+                d = euclidean_minimum_spanning_tree (Points, args.N, vmode);
                 
                 /* Densidade normalizada crítica */
                 dp = d*d*(args.N/log(args.N)); cp += dp;
@@ -177,6 +183,42 @@ int main(int argc, char **argv)
 -----------------------------------------------------------------------
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 */
+point *get_points(int N, int verb_mode)
+{
+    point *Points = NULL, a; 
+    List p; Link aux;
+    int i = 0; 
+    float x, y;
+    
+    char *format = (char *) malloc((3*N+1)*sizeof(*format));
+    strcpy(format, "aaa");
+    format[0] = 'a';
+    for(i = 0; i < N-1; i++) strcat(format, "%g ");
+    format[3*N] = '\0';
+    printf("ok\n");
+    for(i = 0; i < 3*N+1; i++) printf("%c\n", format[i]);
+    free(format);
+    
+    /* Lista de pontos recebidas da stdin */
+/*    p = list_init(); N = 0;
+    for(N = 0; scanf("%g %g", &x, &y) != EOF; N++)
+        { a.x = x; a.y = y; list_insert(p, a); }
+    if(N == 0) return NULL;
+    
+    aux = list_first(p);
+    Points = (point *) malloc(N * sizeof(*Points));
+    
+    \% Cria vetor a partir da lista ligada %\
+    for(i = 0; i < N; i++, aux = list_next(aux)) 
+    {
+        Points[i] = list_remove(p, aux);
+        if(verb_mode) 
+            printf("%d: %f %f\n", i, Points[i].x, Points[i].y);
+    }
+    
+    list_free(p); free(format)*/;
+    return Points;
+}
 
 point *random_points (int N, int D, int vmode)
 {
@@ -188,19 +230,73 @@ point *random_points (int N, int D, int vmode)
     for(i = 0; i < N; i++) 
     {
         Points[i] = randPoint();
-        if(vmode) { /* printf("%d: ", i); */ print_point(Points[i]); }
+        if(vmode) { printf("%d: ", i); print_point(Points[i]); }
     }
     return Points;
 }
 
-float euclidean_minimum_spanning_tree(point *p, int N, int D, int vmode)
+float euclidean_minimum_spanning_tree(point *p, int N, int vmode)
 {
-    return 1;
+    float *distances = (float *) malloc((N*(N-1)/2) * sizeof(*distances));
+    int l = 0, r = N*(N-1)/2 - 1, q = (l+r)/2;
+    int i, j, k = 0, connected = 0; float dp;
+    
+    for(i = 0; i < N; i++)
+        for(j = i+1; j < N; j++)
+            distances[k++] = distance(p[i], p[j]);
+    
+    qsort(distances, N*(N-1)/2, sizeof(float), compare_distances);
+    
+    while(l < r)
+    {
+        dp = distances[q];
+        connected = check_connectivity(p, N, dp, vmode);
+        (connected) ? (r = q-1) : (l = q+1); q = (l+r)/2;
+    }
+    printf("d*(p): %g\n", dp);
+    
+    free(distances);
+    return dp;
 }
 
-int check_connectivity(point *p, int N, int D, float d, int vmode)
+static int compare_distances(const void *p1, const void *p2)
 {
-    return 1;
+    float P1 = *(float *) p1; float P2 = *(float *) p2;
+    if(P1 < P2) return -1;
+    if(P1 > P2) return 1;
+    return 0;
+}
+
+int check_connectivity(point *p, int N, float d, int vmode)
+{
+    /** VARIÁVEIS *****************************************************/
+        int i;           /* Batedor para percorrer vetor de pontos   */
+        point now;       /* Ponto de conexões a serem checadas       */
+        float dis;       /* Auxiliar de distância entre pontos       */
+        int count = 0;   /* Total de conexões encontradas            */
+        int scount = 0;  /* Número parcial de conexões               */
+        Queue connected; /* Lista de pontos conectados               */
+    
+        connected = queueInit();
+        queuePut(connected, p[0]);
+    
+    /** CHECA CONECTIVIDADE *******************************************/
+        while(!queueEmpty(connected))
+        {
+            now = queueGet(connected);
+            for(i = 0; i < N; i++)
+            { 
+                scount = 0; dis = distance(now, p[i]);
+                if(dis < d && !eq(now,p[i]) )
+                    { scount++; queuePut(connected, p[i]); }
+            }
+            if((count += scount) == N-1) break;
+        }
+    
+    /** LIBERAÇÂO DE VARIÁVEIS/RETORNO ********************************/
+        queueFree(connected); 
+        if(count == N-1) return EXIT_SUCCESS;
+        return EXIT_FAILURE;
 }
 
 int receive_arguments(int argc, char **argv, Options *args)

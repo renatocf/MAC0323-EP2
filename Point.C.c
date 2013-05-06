@@ -10,7 +10,7 @@ float distance(point a, point b)
     int D = get_dimension();
     
     for(i = 0; i < D; i++)
-        si += a[i] - b[i];
+        si += (a[i]-b[i])*(a[i]-b[i]);
 
     return sqrt(si);
 }
@@ -27,9 +27,16 @@ point randPoint()
     return new;
 }
 
-void set_seed(int seed)
+void set_seed(int seed) { srand(seed); }
+float lower_limit()     { return 0.0; }
+float upper_limit()     { float D = get_dimension(); return 1.0/sqrt(D); }
+
+int eq(point p1, point p2)
 {
-    srand(seed);
+    int i, D = get_dimension();
+    for(i = 0; i < D; i++)
+        if(p1[i] != p2[i]) return 0;
+    return 1;
 }
 
 void print_point(point p)

@@ -10,7 +10,7 @@
 #***********************************************# 
 
 # SOURCE ###############################################################
-SRC := main.c getopt.c Dimension.c
+SRC := main.c getopt.c Dimension.c queue.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
 DEP := dependencies.mk
 
@@ -24,11 +24,11 @@ RM  := rm -f
 SED := sed
 CAT := cat
 
-CFLAGS := -ansi -pedantic -Wall -g -I.
+CFLAGS := -ansi -pedantic -Wall -g -I. -pg
 
 # LINKER ###############################################################
 LDLIBS  := -L. 
-LDFLAGS := -lm
+LDFLAGS := -lm -lc -pg
 
 # BUILD ################################################################
 cube: $(OBJ) $(CUBE) | $(DEP)
@@ -52,4 +52,4 @@ $(DEP):
 # OTHER OPTIONS ########################################################
 .PHONY: clean
 clean:
-	$(RM) *.o *~ $(DEP) 
+	$(RM) *.o *~ $(DEP) gmon.out
